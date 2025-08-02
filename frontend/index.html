@@ -1,0 +1,44 @@
+<div id="chatbot-widget"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const widget = document.getElementById("chatbot-widget");
+  widget.innerHTML = '<div id="chatbox" style="width: 300px; height: 400px; border: 1px solid #ccc; padding: 10px; overflow-y: scroll; margin-bottom: 10px;"></div>' +
+                     '<input id="user-input" style="width: 80%;" placeholder="Ваш вопрос..."/>' +
+                     '<button id="send-btn">Отправить</button>';
+
+  const chatbox = document.getElementById("chatbox");
+  const history = [];
+
+  function renderHistory() {
+    chatbox.innerHTML = '';
+    history.forEach(entry => {
+      chatbox.innerHTML += `<div><b>${entry.sender}:</b> ${entry.message}</div>`;
+    });
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+
+  document.getElementById("send-btn").onclick = async () => {
+    const input = document.getElementById("user-input").value;
+    if (!input.trim()) return;
+
+    history.push({ sender: "Вы", message: input });
+    renderHistory();
+
+    const loadingMessage = { sender: "Бот", message: "Печатает..." };
+    history.push(loadingMessage);
+    renderHistory();
+
+    const res = await fetch("http://localhost:8000/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: input })
+    });
+
+    const data = await res.json();
+    history.pop(); // Убираем "Печатает..."
+    history.push({ sender: "Бот", message: data.answer });
+    renderHistory();
+  };
+});
+</script>
